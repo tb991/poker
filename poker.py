@@ -1,5 +1,4 @@
 import random
-import linecache # to select a name from a file
 # strings from which to generate the 52 card deck
 cards = "23456789TJQKA"
 suits = "DCHS"
@@ -13,11 +12,13 @@ suite = random.choice(suits)
 
 card = strength + " of " + suite
 '''
+'''
 def getName():
     particular_line = linecache.getline('names.txt', random.randint(1, 18238)) 
     particular_line = particular_line.replace("\n", "")
     particular_line = particular_line.replace(" ", "")
     return particular_line
+'''
 #print(pack)
 #print("FAKE" in pack)
 # object for iterating
@@ -47,7 +48,7 @@ while cardsPtr.value != -1:
     if suitsPtr.value == suitsPtr.limit - 1: # if the suit pointer is exhausted then change the card pointer
         cardsPtr.change()
         suitsPtr.reset() # and reset the suit pointer
-print(deck)
+#print(deck)
 
 # instead of shuffling you can just generate a random number from 0 to 51 and select from the ordered deck
 # you can then use a mutable ordered deck and take out each choice
@@ -57,7 +58,7 @@ def detectWinCategory():
      "flush", "full house", "four of a kind", "straight flush"]
     # high card condition: no pairs, no straights nor flushes
     # note you only need to search for those three categories above mostly
-def pair(sevenCards): # if three/four of a kind this does NOT return the pair
+def sames(sevenCards, ofAKindNum): # if three/four of a kind this does NOT return the pair
     cards = "23456789TJQKA"
     found = [0]*len(cards)
     pairCount = 0
@@ -71,21 +72,24 @@ def pair(sevenCards): # if three/four of a kind this does NOT return the pair
         cardsIndex = cardsIndex + 1
     count = 0
     for f in found:
-        if f==2:
+        if f==ofAKindNum:
             output = output + cards[count]
             count = count + 1
-    if len(output) > 1:
-        return output[-1] + output[-2]
-    elif len(output) == 1:
+    if len(output) > 1: # note this will never happen for 4 of a kind but could for three of a kind (2)
+        if ofAKindNum==2:
+            return output[-1] + output[-2] # two pair
+        elif ofAKindNum==3:
+            return output[0] # three of a kind
+        elif ofAKindNum==4:
+            return output[0] # four of a kind
+    elif len(output) == 1: #pair
         return output
     else:
         return ""
 class Robot:
     cards = "NONE" # empty
-    name = ""
     def __init__(self, cardOne, cardTwo):
         self.cards = cardOne + "" + cardTwo
-        self.name = getName()
     def dealTo(self, cardOne, cardTwo):
         self.cards = cardOne + "" + cardTwo
     def showCards(self):
@@ -95,7 +99,7 @@ def newCardFromDeck():
     choice = random.randint(0,len(mutableOrderedDeck) - 1)
     newCard = mutableOrderedDeck.pop(choice)
     return newCard
-
+''' # not really needed. just need custom or robot
 class Player:
     cards = "NONE"
     name = ""
@@ -107,29 +111,27 @@ class Player:
     def showCards(self):
         print(self.cards, end=" ")
         return self.cards
-
+'''
 def cardVal(cardSymbol):
     global cards
     return cards.index(cardSymbol)
 def newDeck():
     mutableOrderedDeck = deck
-robotPlayers = 0
 
 table = [] # no human or robot by default
-humanPlayers = 0
 def addRobot(hisCards):
-    global robotPlayers 
     global table
-    if robotPlayers == 8:
-        print("max players reached")
-    else:
-        robotPlayers = robotPlayers + 1
-        if hisCards=="GENERATE":
-            robot = Robot(newCardFromDeck(), newCardFromDeck())
-        elif hisCards!="GENERATE":
-            robot = Robot(hisCards[0] + hisCards[1], hisCards[2] + hisCards[3])
+    if hisCards=="GENERATE":
+        robot = Robot(newCardFromDeck(), newCardFromDeck())
+        print("ROBOT ADDED WITH GENERATED CARDS")
         table.append(robot)
-        
+    elif hisCards!="GENERATE":
+        robot = Robot(hisCards[0] + hisCards[1], hisCards[2] + hisCards[3])
+        mutableOrderedDeck.remove(hisCards[0] + hisCards[1])
+        mutableOrderedDeck.remove(hisCards[2] + hisCards[3])
+        table.append(robot)
+        print("ROBOT ADDED WITH CUSTOM CARDS")
+        #robot.showCards()
 dealt = []
  
 def deal():
@@ -139,19 +141,16 @@ def deal():
         dealt.append(newCardFromDeck())
         dealt.append(newCardFromDeck())
         dealt.append(newCardFromDeck())
-        print(dealt)
+        #print(dealt)
     elif len(dealt)==3:
         # turn
         dealt.append(newCardFromDeck())
-        print(dealt)
+        #print(dealt)
     elif len(dealt)==4:
         # river
         dealt.append(newCardFromDeck())
-        print(dealt)
-    elif len(dealt)==5:
-        # reset
-        dealt = []
-
+        #print(dealt)
+            
 def whoWon(): # this assumes betting is over, so 5 cards needed on dealt
     global dealt
     out = []
@@ -162,7 +161,6 @@ def whoWon(): # this assumes betting is over, so 5 cards needed on dealt
     for a in table:
         #print(a.showCards())
         out.append(a.showCards)
-        
 
 # i'm going to create a function for every "victory category" *pair, two pair, flush etc"
 # that returns a value indicating whether it has been detected
@@ -171,6 +169,7 @@ def whoWon(): # this assumes betting is over, so 5 cards needed on dealt
 # returns the value of the highest pair
 
 # ---game simulation---
+'''
 gameState = "empty"
 while True:
     print("There are " + str(len(table)) + " players and the game is in state: " + gameState)
@@ -181,12 +180,8 @@ while True:
         p.showCards()
     a = input("\nEnter command: ")
     if a=="add":
-        a = input("human (h) or robot (r)?")
-        if a=="h":
-            humanPlayers = humanPlayers + 1
-            human = Player(newCardFromDeck(), newCardFromDeck())
-            table.append(human)
-        elif a=="r":
+        a = input("custom (c) or robot (r)?")
+        if a=="r":
             addRobot("GENERATE")
         elif a=="c": # custom, must be no prior humans or robots because i need to select cards
             a = input("Enter cards (AHKC == ace of hearts, king of clubs): ")
@@ -209,7 +204,60 @@ while True:
             x = p.cards
             y = ""
             y = y.join(dealt)
-            if len(pair(x + y))==1:
+            checkers = [sames(x + y, 2), sames(x + y, 2), sames(x + y, 3), sames(x + y, 4)]
+            if len(checkers[0])==1:
                 print(p.name + " has one pair")
-            elif len(pair(x + y))>1:
+            elif len(checkers[1])>1:
                 print(p.name + " has a two pair")
+            elif len(checkers[2])>0:
+                print(p.name + " has a three of a kind")
+            elif len(checkers[3])==1:
+                print(p.name + " has a four of a kind")
+'''
+# prints what every player on the table has (intent)
+def resCheck():
+    out = ""
+    pCount = 0
+    for p in table:
+        pCount = pCount + 1
+        x = p.cards
+        y = ""
+        y = y.join(dealt)
+        checkers = [sames(x + y, 2), sames(x + y, 3), sames(x + y, 4)] # pair/two pair, 3oaK, 3oaK
+        if len(checkers[0])==1:
+            out += "Player " + str(pCount) + " has one pair\n" + checkers[0]
+        elif len(checkers[0])>1:
+            out += "Player " + str(pCount) + " has a two pair\n" + checkers[0] + checkers[1]
+        elif len(checkers[1])>0:
+            out += "Player " + str(pCount) + " has a three of a kind\n" + checkers[0]
+        elif len(checkers[2])==1:
+            out += "Player " + str(pCount) + " has a four of a kind\n" + checkers[0]
+    #print(out)
+    return out
+def runGameTester():
+    #print(table)
+    return a
+def resTest(nameOfResult): # lowercase eg "one pair" (see resCheck)
+    # testing for a pair
+    out = False
+    gcount = 1
+    res = ""
+    global mutableOrderedDeck
+    while not out:
+        table.clear() # clear table
+        dealt.clear() # get rid of the cards
+        mutableOrderedDeck.clear()
+        mutableOrderedDeck = deck.copy()
+        addRobot("GENERATE")
+        deal()
+        deal()
+        deal()
+        a = resCheck()
+        out = a.count(nameOfResult)
+        out = out > 0
+        gcount = gcount + 1
+    for p in table:
+        p.showCards()
+    print("\n" + str(dealt))
+    print("Game "+ str(gcount))
+    #print(" ".join(dealt))
