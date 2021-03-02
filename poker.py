@@ -138,7 +138,7 @@ class Robot:
     def dealTo(self, cardOne, cardTwo):
         self.cards = cardOne + "" + cardTwo
     def showCards(self):
-        print(self.cards, end=" ")
+        #print(self.cards, end=" ")
         return self.cards
 def newCardFromDeck():
     choice = random.randint(0,len(mutableOrderedDeck) - 1)
@@ -213,7 +213,7 @@ def handRanks(allHands5):
                 continue
             betterCount[n] += higher(h2, h)
         n += 1
-    print(betterCount)
+    #print(betterCount)
 def higher(cards5one, cards5two):
     x = ""
     y = ""
@@ -257,7 +257,7 @@ def handCategory(hand7):
         out = "pair"
     elif twop:
         out = "two pair"
-    elif three and (two or twop):
+    if three and (two or twop):
         out = "full house"
     elif three and not (two or twop):
         out = "three of a kind"
@@ -272,7 +272,8 @@ def handCategory(hand7):
     return out
 def show():
     for x in table:
-        x.showCards()
+        print(x.showCards(), end=" ")
+    print()
 def flushSuit(sevenCards):
     # there must be mostly this suit, so that reduces the problem massively
     suits = ["S","H","C","D"]
@@ -303,4 +304,97 @@ def sfCheck(sevenCards):
                 if sevenCards[idx + 1] == suit:
                     outCount = outCount + 1
         idx += 1
-    return outCount == 5            
+    return outCount == 5       
+# these are for strength evaluation between matching results, to prevent false draws being decided   
+# it works with highest() 
+def relevantCardsHC(cards, numToTake):
+    x = ""
+    for i in range(1,numToTake+1):
+        x = x + highest(cards, i)
+    return x
+def relevantCardsPair(sevenCards):
+    pairC = sames(sevenCards, 2)
+    x = sevenCards.replace(pairC, "")
+    x = relevantCardsHC(x,3)
+    return pairC + pairC + x
+def relevantCardsTwoPair(sevenCards):
+    pairC = sames(sevenCards, 2)
+    x = sevenCards.replace(pairC[0], "")
+    x = x.replace(pairC[1], "")
+    x = relevantCardsHC(x,1)
+    return pairC[0]*2 + pairC[1]*2 + x
+def relevantCardsThreeOfAKind(sevenCards): # breaks easy but works for good input
+    thr = sames(sevenCards, 3)
+    x = sevenCards.replace(thr[0], "")
+    x = relevantCardsHC(x,2)
+    return thr[0]*3 + x
+def relevantCardsFullHouse(sevenCards):
+    pairC = sames(sevenCards, 2)
+    thr = sames(sevenCards, 3)
+    x = sevenCards.replace(pairC[0], "")
+    x = x.replace(thr, "")
+    return thr*3 + pairC[0]*2
+def relevantCardsFourOfAKind(sevenCards): # breaks easy but works for good input
+    fou = sames(sevenCards, 4)
+    x = sevenCards.replace(fou, "")
+    x = relevantCardsHC(x,1)
+    return fou*4 + x
+# straightCheck and flushCheck already do this so not needed here
+
+# what i really need is two lists the same size as the number of players
+# and for the first list to contain the name of the result each gets with cards on table
+# and the next list to give a integer for its rank and result number
+
+def final(hands, tableCs):
+    winOrder = ["high card", "pair", "two pair", "three of a kind", "straight", "flush",
+                    "full house", "four of a kind", "straight flush"]
+    sevens = []
+    for h in hands:
+        sevens.append(h + "".join(tableCs))
+    categs = []
+    print(sevens)
+    for s in sevens:
+        categs.append(handCategory(s))
+    print(categs)
+    # we now have the name of the result each player gets
+    # so we need to only focus on the top kind because they win
+    # but remember that could be everyone
+    strongest = ""
+    for kind in winOrder:
+        for result in categs:
+            if kind==result:
+                strongest = kind
+    winKind = strongest
+    winners = []
+    count = 0
+    for w in categs:
+        if w==winKind:
+            winners.append(categs[count])
+        count = count + 1
+    # now compare them all    
+    print("winners: " + str(winners))
+    winCount = [0]*len(winners)
+    for w in range(0,len(winners)-1):
+        for x in range(0,len(winners)-1):
+            if x<=w:
+                continue
+            else:
+                winCount[w] += higher(winners[x], winners[w])         
+    w = max(winCount)
+    idx = 0
+    finalWinners = [] # will contain indexes of winners
+    for a in winCount:
+        if a==w:
+            finalWinners.append(a)
+        idx = idx+1
+    return finalWinners
+def make():
+    addRobot("GENERATE")
+    addRobot("GENERATE")
+    addRobot("GENERATE")
+    deal()
+    deal()
+    deal()
+    show()
+    print(dealt)
+    final([table[0].showCards(), table[1].showCards(), table[2].showCards()], dealt)
