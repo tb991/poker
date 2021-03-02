@@ -249,7 +249,7 @@ def handCategory(hand7):
     straight = len(straightCheck(hand7))==5
     four = len(sames(hand7, 4))==1
     three = len(sames(hand7, 3))>0 # used for full house too...
-    twop = len(sames(hand7, 2))==2
+    twop = len(sames(hand7, 2))>1
     two = len(sames(hand7, 2))==1
     # note straight flush has awkward conditions
     out = "high card"
