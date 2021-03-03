@@ -1,7 +1,4 @@
 import random
-# note there may be an error when there's a straight and a flush
-# in that the straight will be identified yet the flush will be shown for its cards...
-
 # strings from which to generate the 52 card deck
 cards = "23456789TJQKA"
 suits = "DCHS"
