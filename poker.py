@@ -75,6 +75,27 @@ def sames(sevenCards, ofAKindNum):
             output = output + cards[count]
         count = count + 1
     return output[::-1]
+def straightCheckSP(sevenCards): 
+    cards = "A23456789TJQKA"
+    suits = ["S", "H", "C", "D"]
+    out = straightCheck(sevenCards)[::-1]
+    #print(out)
+    suitsy = ""
+    for finalCard in out:
+        pos = 0
+        for realCard in sevenCards:
+            if finalCard == realCard:
+                #print(pos+1)
+                #print(len(sevenCards))
+                if (pos+1)<len(sevenCards):
+                    suitsy += sevenCards[pos + 1]
+            pos = pos + 1
+    y = ""
+    #print(suitsy)
+    for x in range(0,len(out)):
+        y += out[x] + suitsy[x]
+    return y
+            
 def straightCheck(sevenCards): 
     cards = "A23456789TJQKA"
     found = [0]*len(cards)
@@ -103,6 +124,27 @@ def straightCheck(sevenCards):
         output = cards[finalCardIndex-4:finalCardIndex+1]
     #print(output)
     return output[::-1]
+def flushCheckSP(sevenCards): 
+    cards = "A23456789TJQKA"
+    suits = ["S", "H", "C", "D"]
+    out = flushCheck(sevenCards)
+    #print(out)
+    suitsy = ""
+    for finalCard in out:
+        pos = 0
+        for realCard in sevenCards:
+            if finalCard == realCard:
+                #print(pos+1)
+                #print(len(sevenCards))
+                if (pos+1)<len(sevenCards):
+                    suitsy += sevenCards[pos + 1]
+            pos = pos + 1
+    y = ""
+    #print(suitsy)
+    for x in range(0,len(out)):
+        y += out[x] + suitsy[x]
+    return y
+            
 def flushCheck(sevenCards): # if three/four of a kind this does NOT return the pair
     cards = "23456789TJQKA"
     suits = "DCHS"
@@ -231,7 +273,7 @@ def higher(cards5one, cards5two):
         elif Ato2.index(a) > Ato2.index(b):
             return 1
         elif Ato2.index(a) == Ato2.index(b):
-            continue   
+            continue 
 # get the highgest or nth high number from a string of unordered cards
 # very useful method
 def highest(cardsString, n):
@@ -243,7 +285,73 @@ def highest(cardsString, n):
                 found += x
     #print(cardsString)
     return found[n-1]
-    
+def getFinalHand(sevenCards): # this function will help me further determine a winner
+    winOrder = ["high card", "pair", "two pair", "three of a kind", "straight", "flush",
+                    "full house", "four of a kind", "straight flush"]
+    kind = handCategory(sevenCards)
+    out = ""
+    if kind==winOrder[0]:
+        out = firstFiveSP(sevenCards, "")
+    if kind==winOrder[1]:
+        x = relevantCardsPair(sevenCards)
+        #print(x)
+        out = firstFiveSP(sevenCards, x[0])
+    if kind==winOrder[2]:
+        x = relevantCardsTwoPair(sevenCards)
+        #print(x)
+        out = firstFiveSP(sevenCards, x[0] + x[2])
+    if kind==winOrder[3]:
+        x = relevantCardsThreeOfAKind(sevenCards)
+        #print(x)
+        out = firstFiveSP(sevenCards, x[0])
+    if kind==winOrder[4]:
+        ouy = straightCheckSP(sevenCards)
+        #print(x)
+    if kind==winOrder[5]:
+        out = flushCheckSP(sevenCards)
+    if kind==winOrder[6]:
+        x = relevantCardsPair(sevenCards)
+        y = relevantCardsThreeOfAKind(sevenCards)
+        out = firstFiveSP(sevenCards, x[0] + y[0])
+    if kind==winOrder[7]:
+        x = relevantCardsFourOfAKind(sevenCards)
+        out = firstFiveSP(sevenCards, x[0])
+    if kind==winOrder[8]:
+        suit = flushSuit(sevenCards)
+        out = straightCheckSP(sevenCards)
+        #print(x)
+    return out
+    # note after this (not here) we need just to remove the suits from the list after using this function
+    # and then to compare them using higher()
+
+# gets the five relevant cards from the seven provided
+def firstFiveSP(cardsString, precludeCards): # SP = suit preservation
+    cards = "AKQJT98765432"
+    found = ""
+    count = 0
+    for y in precludeCards:
+        idx = -1
+        for x in cardsString:
+            idx = idx + 1
+            if x==y:
+                #print(found)
+                found += x + cardsString[idx+1]
+                count += 1
+                if count==5:
+                    return found
+    for x in precludeCards: # remove preclude cards from what is about to be added
+        cards = cards.replace(x, "")
+    for x in cards:
+        idx = -1
+        for y in cardsString:
+            idx = idx + 1
+            if x==y:
+                found += x + cardsString[idx+1]
+                count = count + 1
+                if count==5:
+                    return found
+    #print(cardsString)
+    return found
 def handCategory(hand7):
     flush = len(flushCheck(hand7))==5
     straight = len(straightCheck(hand7))==5
@@ -292,6 +400,18 @@ def flushSuit(sevenCards):
         return ""
     else:
         return suits[fSuit]
+def sfCheckSP(sevenCards):
+    suit = flushSuit(sevenCards)
+    count = 0
+    cards = ""
+    for a in sevenCards:
+        if a==suit:
+            cards += sevenCards[count-1] + suit
+        count += 1
+    #print(cards)
+    x = straightCheckSP(cards)
+    return x
+
 def sfCheck(sevenCards):
     suit = flushSuit(sevenCards)
     usedCardVals = straightCheck(sevenCards)
@@ -307,6 +427,7 @@ def sfCheck(sevenCards):
     return outCount == 5       
 # these are for strength evaluation between matching results, to prevent false draws being decided   
 # it works with highest() 
+
 def relevantCardsHC(cards, numToTake):
     x = ""
     for i in range(1,numToTake+1):
@@ -339,6 +460,44 @@ def relevantCardsFourOfAKind(sevenCards): # breaks easy but works for good input
     x = sevenCards.replace(fou, "")
     x = relevantCardsHC(x,1)
     return fou*4 + x
+    
+def makeList(cards):
+    suits = ["S", "H", "C", "D"]
+    suitsFound = ""
+    cardsValsFound = ""
+    for c in cards:
+        for s in suits:
+            if c==s:
+                suitsFound += c
+    for c in cards:
+        count ==0
+        for s in suits:
+            if c!=s:
+                count += 1
+            if count==4:
+                cardsValsFound += s
+    out = []
+    c = 0
+    while c<0:
+        out.append(cardsValsFound[c] + suitsFound[c])
+    return out
+def listsEquivalent(list1, list2):
+    if len(list1) != len(list2):
+        return False
+    else:
+        matchFound = ""
+        for c in list1:
+            for c2 in list2:
+                if c==c2:
+                    matchFound += "F"
+                    break
+        matchFoundR = ""
+        for c2 in list2:
+            for c1 in list1:
+                if c1==c2:
+                    matchFound += "M"
+                    break
+        return matchFound=="F"*len(list1) + "M"*len(list2)
 # straightCheck and flushCheck already do this so not needed here
 
 # what i really need is two lists the same size as the number of players
@@ -359,36 +518,78 @@ def final(hands, tableCs):
     # we now have the name of the result each player gets
     # so we need to only focus on the top kind because they win
     # but remember that could be everyone
-    strongest = ""
-    for kind in winOrder:
-        for result in categs:
-            if kind==result:
-                strongest = kind
-    winKind = strongest
-    winners = []
-    count = 0
-    for w in categs:
-        if w==winKind:
-            winners.append(categs[count])
-        count = count + 1
-    # now compare them all    
-    print("winners: " + str(winners))
-    winCount = [0]*len(winners)
-    for w in range(0,len(winners)-1):
-        for x in range(0,len(winners)-1):
-            if x<=w:
+    z = ""
+    for x in winOrder: # because of the order of winOrder, this loop will select the winning category
+        for y in categs:
+            if x==y:
+                z=x
+    # we now need to see which players get that result
+    idx = 0
+    potentials = []
+    for x in categs:
+        if x==z:
+            potentials.append(idx)
+        idx += 1
+        
+    potentialsCards = []
+    for x in potentials:
+        potentialsCards.append(sevens[x])
+    count = len(potentials)
+    # may be a problem because i'm giving them seven not five
+    idx = 0
+    for x in potentialsCards:
+        potentialsCards[idx] = getFinalHand(x)
+        idx += 1
+    while count != 0 and idx != None:
+        print(potentialsCards)
+        idx = loser(potentialsCards)
+        print(idx)
+        if idx != 'none' and idx != None:
+            potentialsCards.pop(idx)
+            potentials.pop(idx)
+            print(potentialsCards)
+        count = count -1
+    print("List of winning players: " + str(potentialsCards))
+    return potentials
+        
+# find a hand that loses 
+def loser(potentials):
+    if len(potentials)==1:
+        return None
+    for x in range(0,len(potentials)):
+        for y in range(0,len(potentials)):
+            if x==y:
                 continue
             else:
-                winCount[w] += higher(winners[x], winners[w])         
-    w = max(winCount)
-    idx = 0
-    finalWinners = [] # will contain indexes of winners
-    for a in winCount:
-        if a==w:
-            finalWinners.append(a)
-        idx = idx+1
-    return finalWinners
+                z = [potentials[x],potentials[y]]
+                z = higher(z[0],z[1])
+                if z==1:
+                    loser = x
+                    return loser
+                elif z==0:
+                    loser = y
+                    return loser
+                elif z=='same':
+                    loser = 'none'
+    # then output the ones left over
+def draw(cardsList):
+    a = len(potentialsCards)
+    countEquiv = 0
+    for x in range(0,a):
+        for y in range(0,a):
+            if x<=y:
+                continue
+            else:
+                X = potentialsCards[x]
+                Y = potentialsCards[y]
+                X = makeList[X]
+                Y = makeList[Y]
+                same = listsEquivalent[X,Y]
+                countEquiv+=1
 def make():
+    #mutableOrderedDeck = deck.copy()
+    #table = []
+    #dealt = []
     addRobot("GENERATE")
     addRobot("GENERATE")
     addRobot("GENERATE")
