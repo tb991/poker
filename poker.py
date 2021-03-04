@@ -503,7 +503,7 @@ def listsEquivalent(list1, list2):
 def game(startingHand, opponents, timesToRun):
     wins = 0
     draws = 0
-
+    losses = 0
     while timesToRun > 0:
         timesToRun = timesToRun - 1
         cards = []
@@ -516,7 +516,20 @@ def game(startingHand, opponents, timesToRun):
                 # it's a new card
                 cards.append(card)
         print([cards[0:opponents*2],"".join(cards)[-10:]])
-        final(cards[0:opponents*2],"".join(cards)[-10:])
+        hands = []
+        for n in range(0,opponents):
+            hands.append(cards[n] + cards[n+1])
+        hands.insert(0,"".join(startingHand))
+        print(hands)
+        #final(cards[0:opponents*2],"".join(cards)[-10:])
+        x = final(hands,"".join(cards)[-10:])
+        if x.count(0)==0:
+            losses += 1
+        elif x.count(0)>1:
+            draws += 1 
+        elif x.count(0)==1:
+            wins += 1
+        print([wins, losses, draws])
 def getCard():
     cards = "23456789TJQKA"
     suits = "DCHS"
