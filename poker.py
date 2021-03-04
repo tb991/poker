@@ -1,4 +1,7 @@
 import random
+# note there may be an error when there's a straight and a flush
+# in that the straight will be identified yet the flush will be shown for its cards...
+
 # strings from which to generate the 52 card deck
 cards = "23456789TJQKA"
 suits = "DCHS"
@@ -257,6 +260,7 @@ def higher(cards5one, cards5two):
     x = ""
     y = ""
     for n in range(1,6):
+        #print([cards5one, n]) cards5one comes up as empty string error 04/03/2021, should be length 10 and cards
         x = x + highest(cards5one, n)
         y = y + highest(cards5two, n)
     if x==y:
@@ -302,7 +306,7 @@ def getFinalHand(sevenCards): # this function will help me further determine a w
         #print(x)
         out = firstFiveSP(sevenCards, x[0])
     if kind==winOrder[4]:
-        ouy = straightCheckSP(sevenCards)
+        out = straightCheckSP(sevenCards)
         #print(x)
     if kind==winOrder[5]:
         out = flushCheckSP(sevenCards)
@@ -496,11 +500,27 @@ def listsEquivalent(list1, list2):
                     break
         return matchFound=="F"*len(list1) + "M"*len(list2)
 # straightCheck and flushCheck already do this so not needed here
+def game(startingHand, opponents, timesToRun):
+    wins = 0
+    draws = 0
 
-# what i really need is two lists the same size as the number of players
-# and for the first list to contain the name of the result each gets with cards on table
-# and the next list to give a integer for its rank and result number
-
+    while timesToRun > 0:
+        timesToRun = timesToRun - 1
+        cards = []
+        card = "NONE"
+        while len(cards)<(opponents*2 + 5):
+            card = getCard()
+            if cards.count(card)!=0:
+                continue
+            else:
+                # it's a new card
+                cards.append(card)
+        print([cards[0:opponents*2],"".join(cards)[-10:]])
+        final(cards[0:opponents*2],"".join(cards)[-10:])
+def getCard():
+    cards = "23456789TJQKA"
+    suits = "DCHS"
+    return random.choice(cards) + random.choice(suits)
 def final(hands, tableCs):
     winOrder = ["high card", "pair", "two pair", "three of a kind", "straight", "flush",
                     "full house", "four of a kind", "straight flush"]
@@ -508,10 +528,10 @@ def final(hands, tableCs):
     for h in hands:
         sevens.append(h + "".join(tableCs))
     categs = []
-    print(sevens)
+    #print(sevens)
     for s in sevens:
         categs.append(handCategory(s))
-    print(categs)
+    #print(categs)
     # we now have the name of the result each player gets
     # so we need to only focus on the top kind because they win
     # but remember that could be everyone
@@ -532,21 +552,24 @@ def final(hands, tableCs):
     for x in potentials:
         potentialsCards.append(sevens[x])
     count = len(potentials)
-    # may be a problem because i'm giving them seven not five
+    # 
     idx = 0
+    print(categs)
     for x in potentialsCards:
         potentialsCards[idx] = getFinalHand(x)
+        #print(potentialsCards)
         idx += 1
+    print(potentialsCards)
     while count != 0 and idx != None:
-        print(potentialsCards)
+        #print(potentialsCards)
         idx = loser(potentialsCards)
-        print(idx)
+        #print(idx)
         if idx != 'none' and idx != None:
             potentialsCards.pop(idx)
             potentials.pop(idx)
-            print(potentialsCards)
+            #print(potentialsCards)
         count = count -1
-    print("List of winning players: " + str(potentialsCards))
+    #rint("List of winning hands: " + str(potentialsCards))
     return potentials
         
 # find a hand that loses 
@@ -558,7 +581,8 @@ def loser(potentials):
             if x==y:
                 continue
             else:
-                z = [potentials[x],potentials[y]]
+                z = [potentials[x],potentials[y]] # error here 04/03/2021, two empty strings
+                #print(z)
                 z = higher(z[0],z[1])
                 if z==1:
                     loser = x
@@ -583,16 +607,19 @@ def draw(cardsList):
                 Y = makeList[Y]
                 same = listsEquivalent[X,Y]
                 countEquiv+=1
-def make():
-    #mutableOrderedDeck = deck.copy()
-    #table = []
-    #dealt = []
-    addRobot("GENERATE")
-    addRobot("GENERATE")
-    addRobot("GENERATE")
+def make(numOpps, startingHand):
+    addRobot(startingHand)
+    while numOpps >0:
+        addRobot("GENERATE")
+        numOpps-=1
     deal()
     deal()
     deal()
-    show()
-    print(dealt)
-    final([table[0].showCards(), table[1].showCards(), table[2].showCards()], dealt)
+    hands = []
+    for n in table:
+        hands.append(n.showCards())
+    #print(hands)
+    #print(dealt)
+    res = final(hands, "".join(dealt))
+    
+    return res.count(0)
