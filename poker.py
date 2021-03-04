@@ -525,7 +525,7 @@ def game(startingHand, opponents, timesToRun):
         x = final(hands,"".join(cards)[-10:])
         if x.count(0)==0:
             losses += 1
-        elif x.count(0)>1:
+        elif x.count(0)==1 and len(x) > 1:
             draws += 1 
         elif x.count(0)==1:
             wins += 1
